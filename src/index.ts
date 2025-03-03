@@ -1,10 +1,10 @@
 import { registerPlugin } from '@capacitor/core';
 
-import type { CrepePlugin } from './definitions';
+export interface CrepePlugin {
+    requestAccessibilityPermission(): Promise<void>;
+    startAccessibilityService(): Promise<void>;
+}
 
-const Crepe = registerPlugin<CrepePlugin>('Crepe', {
-  web: () => import('./web').then((m) => new m.CrepeWeb()),
-});
+const Crepe = registerPlugin<CrepePlugin>('CrepePlugin');
 
-export * from './definitions';
 export { Crepe };
