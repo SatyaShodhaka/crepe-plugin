@@ -11,7 +11,7 @@ pnpm install
 Install the custom plugin as a package:
 
 ```
-pnpm install /custom-capacitor-plugin/crepe-plugin
+pnpm install "path to the crepe-plugin directory on your local machine"
 ```
 
 Sync the plugin with android:
