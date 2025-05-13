@@ -17,7 +17,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import edu.nd.crepe.demonstration.DemonstrationUtil;
 import com.dsc.plugins.crepe.graphquery.model.Node;
 import com.dsc.plugins.crepe.graphquery.ontology.helper.ListOrderResolver;
 //import com.dsc.plugins.crepe.graphquery.automation.AutomatorUtil;
@@ -93,7 +92,19 @@ public class UISnapshot {
         this.activityName = activeActivityName;
         this.packageName = activePackageName;
 
-        List<AccessibilityNodeInfo> allOldNodes = DemonstrationUtil.preOrderTraverse(rootNode);
+        List<AccessibilityNodeInfo> allOldNodes = null;
+        if (rootNode == null)
+            allOldNodes = null;
+        List<AccessibilityNodeInfo> list = new ArrayList<>();
+        list.add(rootNode);
+        int childCount = rootNode.getChildCount();
+        for (int i = 0; i < childCount; i++) {
+            AccessibilityNodeInfo node = rootNode.getChild(i);
+            if (node != null)
+                list.addAll(preOrderTraverse(node));
+        }
+        allOldNodes = list;
+
         List<Node> allNodes = new ArrayList<>();
         if (allOldNodes != null && activePackageName != null) {
             for (AccessibilityNodeInfo oldNode : allOldNodes) {
@@ -110,6 +121,19 @@ public class UISnapshot {
             }
         }
         constructFromListOfNodes(allNodes);
+    }
+
+    private List<AccessibilityNodeInfo> preOrderTraverse(AccessibilityNodeInfo node) {
+        List<AccessibilityNodeInfo> result = new ArrayList<>();
+        result.add(node);
+        int childCount = node.getChildCount();
+        for (int i = 0; i < childCount; i++) {
+            AccessibilityNodeInfo child = node.getChild(i);
+            if (child != null) {
+                result.addAll(preOrderTraverse(child));
+            }
+        }
+        return result;
     }
 
     /*
@@ -149,7 +173,6 @@ public class UISnapshot {
      * } catch (PackageManager.NameNotFoundException e) {
      * Log.e("UISnapshot", String.format("Can't find activity name for %s",
      * componentName.flattenToString()));
-     * }
      * }
      * }
      * }

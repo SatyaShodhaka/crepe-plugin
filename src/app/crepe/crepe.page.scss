@@ -1,0 +1,61 @@
+.centered-text {
+    text-align: center;
+    padding: 20px;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-title {
+    margin-bottom: 20px;
+    color: var(--ion-color-primary);
+}
+
+.helper-text {
+    color: var(--ion-color-medium);
+    font-size: 0.8em;
+    margin: 5px 0 15px 16px;
+}
+
+.button-container {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+ion-card {
+    margin: 16px;
+}
+
+ion-item {
+    --padding-start: 0;
+    --inner-padding-end: 0;
+}
+
+ion-datetime {
+    width: 100%;
+}
+
+ion-select {
+    width: 100%;
+}

@@ -1,0 +1,105 @@
+<ion-header>
+    <ion-toolbar>
+        <ion-title>Crepe</ion-title>
+    </ion-toolbar>
+</ion-header>
+
+<ion-content>
+    <div class="centered-text">
+        <p>Tap the '+' to create or add a collector</p>
+    </div>
+
+    <!-- Display Matching Results -->
+    <ion-card *ngIf="matchingResults && matchingResults.length > 0">
+        <ion-card-header>
+            <ion-card-title>Matching Results</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+            <ion-list>
+                <ion-item *ngFor="let match of matchingResults">
+                    <ion-label>
+                        <h2>{{ match.name }}</h2>
+                        <p>Data Field ID: {{ match.datafieldId }}</p>
+                        <p>Graph Query: {{ match.graphQuery }}</p>
+                    </ion-label>
+                </ion-item>
+            </ion-list>
+        </ion-card-content>
+    </ion-card>
+
+    <!-- FAB Button -->
+    <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+        <ion-fab-button color="tertiary" (click)="openModal()">
+            <ion-icon name="add"></ion-icon>
+        </ion-fab-button>
+    </ion-fab>
+
+    <!-- Modal Overlay -->
+    <div *ngIf="isModalOpen" class="modal-overlay">
+        <div class="modal-content">
+            <!-- Step 1: Main Options -->
+            <ng-container *ngIf="modalStep === 'main'">
+                <ion-card>
+                    <ion-card-content>
+                        <ion-grid>
+                            <ion-row>
+                                <ion-col>
+                                    <ion-button expand="block" color="primary" (click)="createNew()">
+                                        Create New
+                                    </ion-button>
+                                </ion-col>
+                                <ion-col>
+                                    <ion-button expand="block" color="secondary" (click)="addExisting()">
+                                        Add Existing
+                                    </ion-button>
+                                </ion-col>
+                            </ion-row>
+                        </ion-grid>
+                    </ion-card-content>
+                </ion-card>
+            </ng-container>
+
+            <!-- Step 2: Create New Collector Form -->
+            <ng-container *ngIf="modalStep === 'createNew'">
+                <div class="modal-container">
+                    <h2 class="ion-text-center modal-title">ADD A NEW COLLECTOR</h2>
+
+                    <!-- Start Date -->
+                    <ion-item>
+                        <ion-label position="stacked">Start Date</ion-label>
+                        <ion-datetime presentation="date" [(ngModel)]="startDate" placeholder="Select Start Date">
+                        </ion-datetime>
+                    </ion-item>
+
+                    <!-- End Date -->
+                    <ion-item>
+                        <ion-label position="stacked">End Date</ion-label>
+                        <ion-datetime presentation="date" [(ngModel)]="endDate" placeholder="Select End Date">
+                        </ion-datetime>
+                    </ion-item>
+
+                    <!-- App Select Dropdown -->
+                    <ion-item>
+                        <ion-label position="stacked">App</ion-label>
+                        <ion-select [(ngModel)]="selectedApp" placeholder="Select App">
+                            <ion-select-option *ngFor="let app of installedApps" [value]="app.value">
+                                {{ app.label }}
+                            </ion-select-option>
+                        </ion-select>
+                    </ion-item>
+
+                    <p class="helper-text">The APP to collect data from</p>
+
+                    <!-- Action Buttons -->
+                    <div class="button-container">
+                        <ion-button fill="clear" color="medium" (click)="goBack()">BACK</ion-button>
+                        <ion-button fill="clear" color="warning" (click)="submitForm()">NEXT</ion-button>
+                    </div>
+                </div>
+            </ng-container>
+
+            <!-- Close Modal -->
+            <ion-button expand="block" color="danger" (click)="closeModal()">Close</ion-button>
+        </div>
+    </div>
+</ion-content>
