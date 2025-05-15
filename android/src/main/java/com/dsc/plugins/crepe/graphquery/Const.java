@@ -90,7 +90,7 @@ public class Const {
             "com.google.android.inputmethod.latin", "com.menny.android.anysoftkeyboard" };
 
     // App name to display
-    public static final String appName = "edu.nd.crepe.Crepe";
+    public static final String appName = "com.dsc.plugins.crepe.Crepe";
     public static final String appNameUpperCase = appName.toUpperCase();
 
     // colors

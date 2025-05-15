@@ -27,6 +27,8 @@ import java.util.Map;
 public class CrepePlugin extends Plugin {
 
     private Crepe implementation = new Crepe();
+    private UISnapshot uiSnapshot;
+    private static final String TAG = "CrepePlugin";
 
     @PluginMethod
     public void echo(PluginCall call) {
@@ -38,7 +40,7 @@ public class CrepePlugin extends Plugin {
     }
 
     @PluginMethod
-    public void startAccessibilityService(PluginCall call) {
+    public void startAccessibility(PluginCall call) {
         Context context = getContext();
         Intent intent = new Intent(context, MyAccessibilityService.class);
         context.startService(intent);
@@ -46,7 +48,7 @@ public class CrepePlugin extends Plugin {
     }
 
     @PluginMethod
-    public void stopAccessibilityService(PluginCall call) {
+    public void stopAccessibility(PluginCall call) {
         Context context = getContext();
         Intent intent = new Intent(context, MyAccessibilityService.class);
         context.stopService(intent);
@@ -59,9 +61,6 @@ public class CrepePlugin extends Plugin {
         String data = MyAccessibilityService.getLatestAccessibilityData();
         call.resolve(new JSObject().put("data", data));
     }
-
-    private UISnapshot uiSnapshot;
-    private static final String TAG = "CrepePlugin";
 
     @PluginMethod
     public void initializeGraphQuery(PluginCall call) {
@@ -170,63 +169,102 @@ public class CrepePlugin extends Plugin {
 
         try {
             // Parse the collector data JSON
-            Log.d(TAG, "Parsing collector data JSON");
+            Log.d(TAG, "Parsing collector data JSON: " + collectorDataJson);
             Gson gson = new Gson();
             CollectorData collectorData = gson.fromJson(collectorDataJson, CollectorData.class);
-            Log.d(TAG, "Successfully parsed collector data with " + collectorData.getDataFields().size() + " data fields");
+
+            if (collectorData == null) {
+                Log.e(TAG, "Failed to parse collector data - result is null");
+                call.reject("Failed to parse collector data");
+                return;
+            }
+
+            // Get collectors and datafields
+            Map<String, CollectorData.Collector> collectors = collectorData.getCollector();
+            Map<String, CollectorData.DataField> dataFields = collectorData.getDatafield();
+
+            if (collectors == null || dataFields == null) {
+                Log.e(TAG, "Collectors or datafields map is null in collector data");
+                call.reject("Invalid collector data format - missing collectors or datafields");
+                return;
+            }
+
+            Log.d(TAG, "Successfully parsed collector data with " + collectors.size() +
+                    " collectors and " + dataFields.size() + " data fields");
 
             // Create a result object to store matches
             JSObject result = new JSObject();
             JSArray matches = new JSArray();
 
-            // Iterate through data fields and try to match them
-            for (Map.Entry<String, CollectorData.DataField> entry : collectorData.getDataFields().entrySet()) {
-                CollectorData.DataField dataField = entry.getValue();
-                String graphQuery = dataField.getGraphQuery();
-                
-                Log.d(TAG, "Processing data field: " + dataField.getName() + " (ID: " + dataField.getDatafieldId() + ")");
-                
-                if (graphQuery != null && !graphQuery.isEmpty()) {
-                    Log.d(TAG, "Executing graph query: " + graphQuery);
-                    // Execute the graph query
-                    OntologyQuery query = OntologyQuery.deserialize(graphQuery);
-                    Set<SugiliteEntity> queryResults = query.executeOn(uiSnapshot);
-                    Log.d(TAG, "Query returned " + queryResults.size() + " results");
+            // Process each collector
+            for (Map.Entry<String, CollectorData.Collector> collectorEntry : collectors.entrySet()) {
+                String collectorId = collectorEntry.getKey();
+                CollectorData.Collector collector = collectorEntry.getValue();
 
-                    if (!queryResults.isEmpty()) {
-                        // Create a match object
-                        JSObject match = new JSObject();
-                        match.put("datafieldId", dataField.getDatafieldId());
-                        match.put("name", dataField.getName());
-                        match.put("graphQuery", graphQuery);
+                Log.d(TAG, "Processing collector: " + collector.getAppName() +
+                        " (ID: " + collectorId + ")");
 
-                        // Add the matched nodes
-                        JSArray matchedNodes = new JSArray();
-                        for (SugiliteEntity entity : queryResults) {
-                            if (entity.getEntityValue() instanceof Node) {
-                                Node node = (Node) entity.getEntityValue();
-                                JSObject nodeObj = new JSObject();
-                                nodeObj.put("text", node.getText());
-                                nodeObj.put("contentDescription", node.getContentDescription());
-                                nodeObj.put("viewId", node.getViewId());
-                                nodeObj.put("packageName", node.getPackageName());
-                                nodeObj.put("className", node.getClassName());
-                                nodeObj.put("boundsInScreen", node.getBoundsInScreen());
-                                nodeObj.put("isClickable", node.getClickable());
-                                nodeObj.put("isEditable", node.getEditable());
-                                nodeObj.put("isScrollable", node.getScrollable());
-                                matchedNodes.put(nodeObj);
-                                Log.d(TAG, "Matched node: " + node.getText() + " (class: " + node.getClassName() + ")");
-                            }
-                        }
-                        match.put("matchedNodes", matchedNodes);
-                        matches.put(match);
-                        Log.d(TAG, "Added match for data field: " + dataField.getName());
-                    } else {
-                        Log.d(TAG, "No matches found for data field: " + dataField.getName());
+                // Find all datafields for this collector
+                for (Map.Entry<String, CollectorData.DataField> dataFieldEntry : dataFields.entrySet()) {
+                    CollectorData.DataField dataField = dataFieldEntry.getValue();
+
+                    // Skip datafields that don't belong to this collector
+                    if (!collectorId.equals(dataField.getCollectorId())) {
+                        continue;
                     }
-                } else {
-                    Log.w(TAG, "Empty graph query for data field: " + dataField.getName());
+
+                    String graphQuery = dataField.getGraphQuery();
+                    Log.d(TAG, "Processing data field: " + dataField.getName() +
+                            " (ID: " + dataField.getDatafieldId() + ")");
+
+                    if (graphQuery != null && !graphQuery.isEmpty()) {
+                        Log.d(TAG, "Executing graph query: " + graphQuery);
+                        // Execute the graph query
+                        OntologyQuery query = OntologyQuery.deserialize(graphQuery);
+                        Set<SugiliteEntity> queryResults = query.executeOn(uiSnapshot);
+                        Log.d(TAG, "Query returned " + queryResults.size() + " results");
+
+                        if (!queryResults.isEmpty()) {
+                            // Create a match object
+                            JSObject match = new JSObject();
+                            match.put("collectorId", collectorId);
+                            match.put("collectorName", collector.getAppName());
+                            match.put("datafieldId", dataField.getDatafieldId());
+                            match.put("name", dataField.getName());
+                            match.put("graphQuery", graphQuery);
+
+                            // Add the matched nodes
+                            JSArray matchedNodes = new JSArray();
+                            for (SugiliteEntity entity : queryResults) {
+                                if (entity.getEntityValue() instanceof Node) {
+                                    Node node = (Node) entity.getEntityValue();
+                                    JSObject nodeObj = new JSObject();
+                                    nodeObj.put("text", node.getText());
+                                    nodeObj.put("contentDescription", node.getContentDescription());
+                                    nodeObj.put("viewId", node.getViewId());
+                                    nodeObj.put("packageName", node.getPackageName());
+                                    nodeObj.put("className", node.getClassName());
+                                    nodeObj.put("boundsInScreen", node.getBoundsInScreen());
+                                    nodeObj.put("isClickable", node.getClickable());
+                                    nodeObj.put("isEditable", node.getEditable());
+                                    nodeObj.put("isScrollable", node.getScrollable());
+                                    matchedNodes.put(nodeObj);
+                                    Log.d(TAG, "Matched node: " + node.getText() +
+                                            " (class: " + node.getClassName() + ")");
+                                }
+                            }
+                            match.put("matchedNodes", matchedNodes);
+                            matches.put(match);
+                            Log.d(TAG, "Added match for data field: " + dataField.getName() +
+                                    " in collector: " + collector.getAppName());
+                        } else {
+                            Log.d(TAG, "No matches found for data field: " + dataField.getName() +
+                                    " in collector: " + collector.getAppName());
+                        }
+                    } else {
+                        Log.w(TAG, "Empty graph query for data field: " + dataField.getName() +
+                                " in collector: " + collector.getAppName());
+                    }
                 }
             }
 
@@ -236,6 +274,47 @@ public class CrepePlugin extends Plugin {
         } catch (Exception e) {
             Log.e(TAG, "Failed to process collector data: " + e.getMessage(), e);
             call.reject("Failed to process collector data: " + e.getMessage());
+        }
+    }
+
+    @PluginMethod
+    public void requestAccessibilityPermission(PluginCall call) {
+        try {
+            Context context = getContext();
+            Intent intent = new Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(intent);
+            call.resolve();
+        } catch (Exception e) {
+            call.reject("Failed to open accessibility settings: " + e.getMessage());
+        }
+    }
+
+    @PluginMethod
+    public void isAccessibilityServiceEnabled(PluginCall call) {
+        try {
+            Context context = getContext();
+            String serviceName = context.getPackageName() + "/" + MyAccessibilityService.class.getCanonicalName();
+            int accessibilityEnabled = android.provider.Settings.Secure.getInt(
+                    context.getContentResolver(),
+                    android.provider.Settings.Secure.ACCESSIBILITY_ENABLED,
+                    0);
+
+            boolean isEnabled = false;
+            if (accessibilityEnabled == 1) {
+                String settingValue = android.provider.Settings.Secure.getString(
+                        context.getContentResolver(),
+                        android.provider.Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+                if (settingValue != null) {
+                    isEnabled = settingValue.contains(serviceName);
+                }
+            }
+
+            JSObject ret = new JSObject();
+            ret.put("enabled", isEnabled);
+            call.resolve(ret);
+        } catch (Exception e) {
+            call.reject("Failed to check accessibility service status: " + e.getMessage());
         }
     }
 

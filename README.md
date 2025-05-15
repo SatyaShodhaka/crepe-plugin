@@ -39,6 +39,10 @@ npx cap sync
 * [`startAccessibilityService()`](#startaccessibilityservice)
 * [`stopAccessibilityService()`](#stopaccessibilityservice)
 * [`getAccessibilityData()`](#getaccessibilitydata)
+* [`initializeGraphQuery()`](#initializegraphquery)
+* [`updateSnapshot()`](#updatesnapshot)
+* [`queryGraph(...)`](#querygraph)
+* [`matchCollectorData(...)`](#matchcollectordata)
 
 </docgen-index>
 
@@ -85,6 +89,58 @@ getAccessibilityData() => Promise<{ data: string; }>
 ```
 
 **Returns:** <code>Promise&lt;{ data: string; }&gt;</code>
+
+--------------------
+
+
+### initializeGraphQuery()
+
+```typescript
+initializeGraphQuery() => Promise<{ success: boolean; }>
+```
+
+**Returns:** <code>Promise&lt;{ success: boolean; }&gt;</code>
+
+--------------------
+
+
+### updateSnapshot()
+
+```typescript
+updateSnapshot() => Promise<{ success: boolean; }>
+```
+
+**Returns:** <code>Promise&lt;{ success: boolean; }&gt;</code>
+
+--------------------
+
+
+### queryGraph(...)
+
+```typescript
+queryGraph(options: { pattern: string; }) => Promise<{ results: any[]; }>
+```
+
+| Param         | Type                              |
+| ------------- | --------------------------------- |
+| **`options`** | <code>{ pattern: string; }</code> |
+
+**Returns:** <code>Promise&lt;{ results: any[]; }&gt;</code>
+
+--------------------
+
+
+### matchCollectorData(...)
+
+```typescript
+matchCollectorData(options: { collectorData: string; }) => Promise<{ matches: any[]; }>
+```
+
+| Param         | Type                                    |
+| ------------- | --------------------------------------- |
+| **`options`** | <code>{ collectorData: string; }</code> |
+
+**Returns:** <code>Promise&lt;{ matches: any[]; }&gt;</code>
 
 --------------------
 

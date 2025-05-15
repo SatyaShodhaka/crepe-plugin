@@ -23,5 +23,25 @@ export class CrepeWeb extends WebPlugin implements CrepePlugin {
     console.warn('getAccessibilityData is not available on the web.');
     return Promise.resolve({ data: '' });
   }
+
+  async initializeGraphQuery(): Promise<{ success: boolean }> {
+    console.warn('initializeGraphQuery is not available on the web.');
+    return Promise.resolve({ success: false });
+  }
+
+  async updateSnapshot(): Promise<{ success: boolean }> {
+    console.warn('updateSnapshot is not available on the web.');
+    return Promise.resolve({ success: false });
+  }
+
+  async queryGraph(options: { pattern: string }): Promise<{ results: any[] }> {
+    console.warn(`queryGraph is not available on the web. Pattern: ${options.pattern}`);
+    return Promise.resolve({ results: [] });
+  }
+
+  async matchCollectorData(options: { collectorData: string }): Promise<{ matches: any[] }> {
+    console.warn(`matchCollectorData is not available on the web. Collector data: ${options.collectorData}`);
+    return Promise.resolve({ matches: [] });
+  }
 }
 
