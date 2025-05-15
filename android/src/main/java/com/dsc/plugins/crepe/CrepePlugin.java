@@ -26,6 +26,9 @@ import java.util.Map;
 @CapacitorPlugin(name = "Crepe")
 public class CrepePlugin extends Plugin {
 
+    // Ionic App -> Plugin Call -> matchCollectorData -> Process Data -> Execute
+    // Queries -> Return Results
+
     private Crepe implementation = new Crepe();
     private UISnapshot uiSnapshot;
     private static final String TAG = "CrepePlugin";
